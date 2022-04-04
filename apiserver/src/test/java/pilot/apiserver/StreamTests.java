@@ -3,64 +3,46 @@ package pilot.apiserver;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.awt.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
+class StreamTest {
+    int field1;
+    int field2;
+    int field3;
+
+    public List<Integer> getFieldList() {
+        return Arrays.asList(field1, field2, field3);
+    }
+
+}
 
 @SpringBootTest
-class ApiserverApplicationTests {
+class StreamTests {
 
-	@Test
-	void faltMap() {
-		class Dto {
-			public long a;
-			public long b;
-		}
+    @Test
+    void streamFlatMap() {
+        var streamTest1 = new StreamTest();
+        streamTest1.field1 = 11;
+        streamTest1.field2 = 12;
+        streamTest1.field3 = 13;
 
-		Dto d1 = new Dto();
-		d1.a = 5;
-		d1.b = 4;
+        var streamTest2 = new StreamTest();
+        streamTest2.field1 = 21;
+        streamTest2.field2 = 22;
+        streamTest2.field3 = 23;
+        
+        var streamTestList = Arrays.asList(streamTest1, streamTest2);
+        var flatFieldList = streamTestList.stream().flatMap(fm -> fm.getFieldList().stream()).collect(Collectors.toList());
 
-		Dto d2 = new Dto();
-		d2.a = 3;
-		d2.b = 2;
-
-		List<Dto> dtoList = Arrays.asList(d1, d2);
-		List<Long> allList = dtoList.stream().flatMapToLong(f -> LongStream.of(f.a, f.b)).collect(Collectors.);
-
-		}
-	}
-
-	@Test
-	void contextLoads() {
-		var serverZoneId = ZoneId.systemDefault();
-		var baseTimeZoneId = ZoneOffset.ofHours(8);
-
-
-		var nowTime = convertOnBaseTimeZone(LocalDateTime.now(), 8);
-		var startTime = convertOnBaseTimeZone(LocalDateTime.of(2021, 11, 4, 0, 30), 8);
-		var endTime = convertOnBaseTimeZone(LocalDateTime.of(2021, 11, 5, 19, 0), 8);
-
-		if(startTime.isBefore(nowTime))
-			System.out.println("aa");
-
-		var gapDay = getGapDay(LocalDateTime.of(2021, 11, 4, 0, 30), LocalDateTime.now(), 8);
-		var gapDay2 = getGapDay(LocalDateTime.of(2021, 11, 4, 0, 30), LocalDateTime.now(), 9);
-
-		var gapDay3 = getGapDay(LocalDateTime.of(2021, 11, 3, 0, 30), LocalDateTime.now(), 8);
-
-		if(startTime.toLocalDate().isEqual(nowTime.toLocalDate()))
-			System.out.println("11111111111111111");
-
-		if(startTime.plusDays(1).toLocalDate().isEqual(nowTime.toLocalDate()))
-			System.out.println("2222222222222222222");
-
-		var aa = startTime.toLocalDateTime();
+        assertTrue(flatFieldList.size() == 5);
 	}
 
 	public static ZonedDateTime convertOnBaseTimeZone(LocalDateTime dateTime, int baseTimeZone) {
