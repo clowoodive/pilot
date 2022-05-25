@@ -1,10 +1,10 @@
-package clowoodive.pilot.template;
+package clowoodive.pilot.resttemplate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TemplateApplicationTests {
+class RestTemplateApplicationTests {
 
 	@Test
 	void contextLoads() {

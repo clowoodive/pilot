@@ -1,4 +1,4 @@
-package clowoodive.pilot.template;
+package clowoodive.pilot.resttemplate;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package clowoodive.pilot.template;
+package clowoodive.pilot.resttemplate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -9,16 +9,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 @SpringBootApplication
-public class TemplateApplication {
+public class RestTemplateApplication {
 
     @Autowired
     RestTemplateBuilder restTemplateBuilder;
 
     public static void main(String[] args) {
-        SpringApplication.run(TemplateApplication.class, args);
+        SpringApplication.run(RestTemplateApplication.class, args);
     }
 
     @Bean
