@@ -1,0 +1,1 @@
+https://clowoodive.github.io/spring/post-spring-msa-spring-cloud-config-server/
