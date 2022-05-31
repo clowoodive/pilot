@@ -1,0 +1,4 @@
+pilot:
+  target: dev
+  lang: ko
+  datapath: ../config/config-dev.json

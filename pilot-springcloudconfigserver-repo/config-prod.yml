@@ -1,0 +1,4 @@
+pilot:
+  target: prod
+  lang: en
+  datapath: ../config/config-prod.json
