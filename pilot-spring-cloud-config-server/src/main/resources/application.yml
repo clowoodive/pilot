@@ -9,4 +9,4 @@ spring:
           uri: https://github.com/clowoodive/pilot
 #          basedir: target/config-repo
           default-label: main
-          searchPaths: pilot-springcloudconfigserver-repo
+          searchPaths: pilot-spring-cloud-config-server-repo
