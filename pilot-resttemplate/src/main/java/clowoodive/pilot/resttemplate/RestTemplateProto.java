@@ -47,7 +47,7 @@ public abstract class RestTemplateProto {
         @JsonProperty("date_of_expiry")
 //        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
 //        @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssxxx")
-        @JsonDeserialize(using = JacksonConfig.CustumOffsetDateTimeDeserializer.class)
+        @JsonDeserialize(using = JacksonConfig.CustomOffsetDateTimeDeserializer.class)
         private OffsetDateTime dateOfExpiry;
 
         @JsonProperty("created_by")

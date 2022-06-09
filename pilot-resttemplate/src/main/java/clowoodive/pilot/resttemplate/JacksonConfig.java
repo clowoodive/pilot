@@ -37,7 +37,7 @@ public class JacksonConfig {
                 ;
     }
 
-    public static class CustumOffsetDateTimeDeserializer extends JsonDeserializer<OffsetDateTime> {
+    public static class CustomOffsetDateTimeDeserializer extends JsonDeserializer<OffsetDateTime> {
         @Override
         public OffsetDateTime deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
                 throws IOException {
