@@ -15,7 +15,7 @@ public class MessageController {
     }
 
     @GetMapping("/filter/message")
-    public String createMessageForm(Model model) {
+    public String createMessageForm() {
         return "message-form";
     }
 
