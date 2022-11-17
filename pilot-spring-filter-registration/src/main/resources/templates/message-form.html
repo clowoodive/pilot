@@ -5,7 +5,7 @@
 
 <div class="container">
 
-    <form action="/filter/message" method="post">
+    <form th:action="@{/filter/message}" method="post">
         <div class="form-group">
             <label for="message">인사</label>
             <input type="text" id="message" name="message" placeholder="인사말을 입력하세요"/>
