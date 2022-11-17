@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div class="container">
+
+    <form th:action="@{/filter/message}" method="post">
+        <div class="form-group">
+            <label for="message">인사</label>
+            <input type="text" id="message" name="message" placeholder="인사말을 입력하세요"/>
+        </div>
+        <button type="submit">등록</button>
+    </form>
+
+</div>
+
+</body>
+</html>
