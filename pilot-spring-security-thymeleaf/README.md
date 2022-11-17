@@ -1,2 +1,1 @@
-# custom Filter 추가 예제
-    - CsrfFilter와 유사한 Filter를 추가해서 Form에 삽입되는지 확인하기 위한 예제
+# Spring Security의 CSRF 토큰이 Thymeleaf form에 삽입되는 방식을 확인하기 위한 예제
