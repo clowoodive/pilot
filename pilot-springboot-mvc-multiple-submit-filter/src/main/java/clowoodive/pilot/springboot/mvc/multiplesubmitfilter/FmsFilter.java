@@ -26,41 +26,27 @@ import java.util.UUID;
 @Component
 public class FmsFilter extends OncePerRequestFilter {
 
-    /**
-     * The default {@link RequestMatcher} that indicates if CSRF protection is required or
-     * not. The default is to ignore GET, HEAD, TRACE, OPTIONS and process all other
-     * requests.
-     */
-    public static final RequestMatcher DEFAULT_CSRF_MATCHER = new DefaultRequiresCsrfMatcher();
-
-    /**
-     * The attribute name to use when marking a given request as one that should not be
-     * filtered.
-     *
-     * To use, set the attribute on your {@link HttpServletRequest}: <pre>
-     * 	CsrfFilter.skipRequest(request);
-     * </pre>
-     */
-//    private static final String SHOULD_NOT_FILTER = "SHOULD_NOT_FILTER" + FormTokenFilter.class.getName();
-
+    public static final RequestMatcher DEFAULT_FMS_MATCHER = new DefaultRequiresFmsMatcher();
     public static final String FMS_PARAMETER_NAME = "_fms";
+
     private final Log logger = LogFactory.getLog(getClass());
 
-//    private final CsrfTokenRepository tokenRepository;
-
-    private RequestMatcher requireCsrfProtectionMatcher = DEFAULT_CSRF_MATCHER;
+    private RequestMatcher requireFmsProtectionMatcher = DEFAULT_FMS_MATCHER;
 
     private AccessDeniedHandler accessDeniedHandler = new AccessDeniedHandlerImpl();
 
-//    public FormTokenFilter(CsrfTokenRepository csrfTokenRepository) {
-//        Assert.notNull(csrfTokenRepository, "csrfTokenRepository cannot be null");
-//        this.tokenRepository = csrfTokenRepository;
-//    }
-
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-//        return Boolean.TRUE.equals(request.getAttribute(SHOULD_NOT_FILTER));
-//    }
+    private static boolean equalsConstantTime(String expected, String actual) {
+        if (expected == actual) {
+            return true;
+        }
+        if (expected == null || actual == null) {
+            return false;
+        }
+        // Encode after ensure that the string is not null
+        byte[] expectedBytes = Utf8.encode(expected);
+        byte[] actualBytes = Utf8.encode(actual);
+        return MessageDigest.isEqual(expectedBytes, actualBytes);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -71,7 +57,7 @@ public class FmsFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         if (session != null) {
             fmsToken = (String) session.getAttribute(FMS_PARAMETER_NAME);
-            if(fmsToken == null) {
+            if (fmsToken == null) {
                 fmsToken = UUID.randomUUID().toString();
                 session.setAttribute(FMS_PARAMETER_NAME, fmsToken);
             }
@@ -86,17 +72,17 @@ public class FmsFilter extends OncePerRequestFilter {
 //        }
 //        request.setAttribute(CsrfToken.class.getName(), csrfToken);
 //        request.setAttribute(csrfToken.getParameterName(), csrfToken);
-        if (!this.requireCsrfProtectionMatcher.matches(request)) {
+        if (!this.requireFmsProtectionMatcher.matches(request)) {
             if (this.logger.isTraceEnabled()) {
                 this.logger.trace("Did not protect against CSRF since request did not match "
-                        + this.requireCsrfProtectionMatcher);
+                        + this.requireFmsProtectionMatcher);
             }
             filterChain.doFilter(request, response);
             return;
         }
 //        String actualToken = request.getHeader(csrfToken.getHeaderName());
 //        if (actualToken == null) {
-            var actualToken = request.getParameter(FMS_PARAMETER_NAME);
+        var actualToken = request.getParameter(FMS_PARAMETER_NAME);
 //        }
         if (!equalsConstantTime(fmsToken, actualToken)) {
             this.logger.debug(
@@ -112,61 +98,7 @@ public class FmsFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-//    public static void skipRequest(HttpServletRequest request) {
-//        request.setAttribute(SHOULD_NOT_FILTER, Boolean.TRUE);
-//    }
-
-    /**
-     * Specifies a {@link RequestMatcher} that is used to determine if CSRF protection
-     * should be applied. If the {@link RequestMatcher} returns true for a given request,
-     * then CSRF protection is applied.
-     *
-     * <p>
-     * The default is to apply CSRF protection for any HTTP method other than GET, HEAD,
-     * TRACE, OPTIONS.
-     * </p>
-     * @param requireCsrfProtectionMatcher the {@link RequestMatcher} used to determine if
-     * CSRF protection should be applied.
-     */
-//    public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
-//        Assert.notNull(requireCsrfProtectionMatcher, "requireCsrfProtectionMatcher cannot be null");
-//        this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
-//    }
-
-    /**
-     * Specifies a {@link AccessDeniedHandler} that should be used when CSRF protection
-     * fails.
-     *
-     * <p>
-     * The default is to use AccessDeniedHandlerImpl with no arguments.
-     * </p>
-     * @param accessDeniedHandler the {@link AccessDeniedHandler} to use
-     */
-//    public void setAccessDeniedHandler(AccessDeniedHandler accessDeniedHandler) {
-//        Assert.notNull(accessDeniedHandler, "accessDeniedHandler cannot be null");
-//        this.accessDeniedHandler = accessDeniedHandler;
-//    }
-
-    /**
-     * Constant time comparison to prevent against timing attacks.
-     * @param expected
-     * @param actual
-     * @return
-     */
-    private static boolean equalsConstantTime(String expected, String actual) {
-        if (expected == actual) {
-            return true;
-        }
-        if (expected == null || actual == null) {
-            return false;
-        }
-        // Encode after ensure that the string is not null
-        byte[] expectedBytes = Utf8.encode(expected);
-        byte[] actualBytes = Utf8.encode(actual);
-        return MessageDigest.isEqual(expectedBytes, actualBytes);
-    }
-
-    private static final class DefaultRequiresCsrfMatcher implements RequestMatcher {
+    private static final class DefaultRequiresFmsMatcher implements RequestMatcher {
 
         private final HashSet<String> allowedMethods = new HashSet<>(Arrays.asList("GET", "HEAD", "TRACE", "OPTIONS"));
 
@@ -177,9 +109,8 @@ public class FmsFilter extends OncePerRequestFilter {
 
         @Override
         public String toString() {
-            return "CsrfNotRequired " + this.allowedMethods;
+            return "FmsNotRequired " + this.allowedMethods;
         }
 
     }
-
 }

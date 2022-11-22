@@ -49,6 +49,7 @@ public class CsrfWithFmsRequestDataValueProcessor implements RequestDataValuePro
         Map<String, String> hiddenFields = new HashMap<>(1);
         hiddenFields.put(token.getParameterName(), token.getToken());
 
+        // request의 FMS 토큰을 hidden field에 포함
         var fmsToken = (String) request.getAttribute(FmsFilter.FMS_PARAMETER_NAME);
         if(fmsToken != null)
             hiddenFields.put(FmsFilter.FMS_PARAMETER_NAME, fmsToken);
