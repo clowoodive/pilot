@@ -3,6 +3,7 @@ package clowoodive.pilot.springboot.mvc.multiplesubmitfilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.log.LogMessage;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -35,6 +36,9 @@ public class FmsFilter extends OncePerRequestFilter {
 
     private AccessDeniedHandler accessDeniedHandler = new AccessDeniedHandlerImpl();
 
+    private boolean enabled = true;
+
+
     private static boolean equalsConstantTime(String expected, String actual) {
         if (expected == actual) {
             return true;
@@ -48,10 +52,24 @@ public class FmsFilter extends OncePerRequestFilter {
         return MessageDigest.isEqual(expectedBytes, actualBytes);
     }
 
+    public void enable() {
+        this.enabled = true;
+    }
+
+    public void disable() {
+        this.enabled = false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         request.setAttribute(HttpServletResponse.class.getName(), response);
+
+        if (!this.enabled) {
+                this.logger.warn("FMS filter disabled.");
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String fmsToken = null;
         HttpSession session = request.getSession(false);
@@ -74,7 +92,7 @@ public class FmsFilter extends OncePerRequestFilter {
 //        request.setAttribute(csrfToken.getParameterName(), csrfToken);
         if (!this.requireFmsProtectionMatcher.matches(request)) {
             if (this.logger.isTraceEnabled()) {
-                this.logger.trace("Did not protect against CSRF since request did not match "
+                this.logger.trace("Did not protect against FMS since request did not match "
                         + this.requireFmsProtectionMatcher);
             }
             filterChain.doFilter(request, response);
@@ -83,28 +101,37 @@ public class FmsFilter extends OncePerRequestFilter {
 //        String actualToken = request.getHeader(csrfToken.getHeaderName());
 //        if (actualToken == null) {
         var actualToken = request.getParameter(FMS_PARAMETER_NAME);
+
+        logger.warn("ssession token : " + fmsToken);
+        logger.warn("request token : " + actualToken);
 //        }
         if (!equalsConstantTime(fmsToken, actualToken)) {
             this.logger.debug(
                     LogMessage.of(() -> "Invalid FMS token found for " + UrlUtils.buildFullRequestUrl(request)));
 //            AccessDeniedException exception = session != null ? new InvalidCsrfTokenException(csrfToken, actualToken)
 //                    : new MissingCsrfTokenException(actualToken);
-            this.accessDeniedHandler.handle(request, response, new AccessDeniedException("Invalid FMS token"));
+            response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), HttpStatus.NOT_ACCEPTABLE.getReasonPhrase());
+//            this.accessDeniedHandler.handle(request, response, new AccessDeniedException("Invalid FMS token"));
             return;
         } else {
-            if (session != null)
-                session.removeAttribute(FMS_PARAMETER_NAME);
+            if (session != null) {
+//                session.removeAttribute(FMS_PARAMETER_NAME);
+                var newFmsToken = UUID.randomUUID().toString();
+                logger.warn("new token : " + newFmsToken);
+                session.setAttribute(FMS_PARAMETER_NAME, newFmsToken);
+                request.setAttribute(FMS_PARAMETER_NAME, newFmsToken);
+            }
         }
         filterChain.doFilter(request, response);
     }
 
     private static final class DefaultRequiresFmsMatcher implements RequestMatcher {
 
-        private final HashSet<String> allowedMethods = new HashSet<>(Arrays.asList("GET", "HEAD", "TRACE", "OPTIONS"));
+        private final HashSet<String> allowedMethods = new HashSet<>(Arrays.asList("POST", "PUT", "DELETE"));
 
         @Override
         public boolean matches(HttpServletRequest request) {
-            return !this.allowedMethods.contains(request.getMethod());
+            return this.allowedMethods.contains(request.getMethod());
         }
 
         @Override
