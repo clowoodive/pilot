@@ -52,185 +52,186 @@ import static org.springframework.test.web.servlet.setup.SharedHttpSessionConfig
 @WithMockUser
 class FmsFilterTests {
 
-	@Autowired
-	private WebApplicationContext webApplicationContext;
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
-	@Autowired
-	private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Autowired
-	FmsFilter fmsFilter;
+    @Autowired
+    private FmsFilter fmsFilter;
 
-	@BeforeEach
-	public void setup() {
-		fmsFilter.enable();
+
+    @BeforeEach
+    public void setup() {
+        fmsFilter.enable();
 //		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext)
 //				.apply(sharedHttpSession())
 //				.build();
-	}
+    }
 
-	@Test
-	public void settingCheck() {
-		ServletContext servletContext = webApplicationContext.getServletContext();
-		assertNotNull(servletContext);
-		assertTrue(servletContext instanceof MockServletContext);
-		assertNotNull(webApplicationContext.getBean("messageController"));
-	}
+    @Test
+    public void settingCheck() {
+        ServletContext servletContext = webApplicationContext.getServletContext();
+        assertNotNull(servletContext);
+        assertTrue(servletContext instanceof MockServletContext);
+        assertNotNull(webApplicationContext.getBean("messageController"));
+    }
 
-	@Test
-	public void getForm() throws Exception {
-		mockMvc.perform(get("/filter/message"))
-				.andDo(print())
-				.andExpect(view().name("message-form"));
-	}
+    @Test
+    public void getForm() throws Exception {
+        mockMvc.perform(get("/filter/message"))
+                .andDo(print())
+                .andExpect(view().name("message-form"));
+    }
 
-	@Test
-	public void postFormWithInvalidCsrf() throws Exception {
-		// given
-		fmsFilter.disable();
+    @Test
+    public void postFormWithInvalidCsrf() throws Exception {
+        // given
+        fmsFilter.disable();
 
-		// when
-		ResultActions result = mockMvc.perform(post("/filter/message")
-						.with(csrf().useInvalidToken())
-						.param("message", "with Invalid CSRF")
-		);
+        // when
+        ResultActions result = mockMvc.perform(post("/filter/message")
+                .with(csrf().useInvalidToken())
+                .param("message", "with Invalid CSRF")
+        );
 
-		// then
-		result.andDo(print())
-				.andExpect(status().isForbidden());
-	}
+        // then
+        result.andDo(print())
+                .andExpect(status().isForbidden());
+    }
 
-	@Test
-	public void postFormWithValidCsrf() throws Exception {
-		// given
-		fmsFilter.disable();
+    @Test
+    public void postFormWithValidCsrf() throws Exception {
+        // given
+        fmsFilter.disable();
 
-		// when
-		ResultActions result = mockMvc.perform(post("/filter/message")
-				.with(csrf())
-				.param("message", "with valid CSRF")
-		);
+        // when
+        ResultActions result = mockMvc.perform(post("/filter/message")
+                .with(csrf())
+                .param("message", "with valid CSRF")
+        );
 
-		// then
-		result.andDo(print())
-				.andExpect(status().isOk());
-	}
+        // then
+        result.andDo(print())
+                .andExpect(status().isOk());
+    }
 
-	@Test
-	public void postMFormWithValidCsrfAndFms() throws Exception {
-		// given
-		UUID genUuid = UUID.randomUUID();
+    @Test
+    public void postMFormWithValidCsrfAndFms() throws Exception {
+        // given
+        UUID genUuid = UUID.randomUUID();
 
-		try (MockedStatic<UUID> uuidMockedStatic = mockStatic(UUID.class)) {
-			when(UUID.randomUUID()).thenReturn(genUuid);
+        try (MockedStatic<UUID> uuidMockedStatic = mockStatic(UUID.class)) {
+            when(UUID.randomUUID()).thenReturn(genUuid);
 
-			// when
-			ResultActions result = mockMvc.perform(post("/filter/message")
-					.with(csrf())
-					.param(FmsFilter.FMS_PARAMETER_NAME, genUuid.toString())
-					.param("message", "with CSRF and FMS")
-			);
+            // when
+            ResultActions result = mockMvc.perform(post("/filter/message")
+                    .with(csrf())
+                    .param(FmsFilter.FMS_PARAMETER_NAME, genUuid.toString())
+                    .param("message", "with CSRF and FMS")
+            );
 
-			// then
-			result.andDo(print())
-					.andExpect(status().isOk());
-		}
-	}
+            // then
+            result.andDo(print())
+                    .andExpect(status().isOk());
+        }
+    }
 
-	@Test
-	public void postFormWithValidCsrfAndInvalidFms() throws Exception {
-		// given
+    @Test
+    public void postFormWithValidCsrfAndInvalidFms() throws Exception {
+        // given
 
-		// when
-		ResultActions result = mockMvc.perform(post("/filter/message")
-				.with(csrf())
-				.param(FmsFilter.FMS_PARAMETER_NAME, "INVALID-FMS-TOKEN")
-				.param("message", "with CSRF and FMS")
-		);
+        // when
+        ResultActions result = mockMvc.perform(post("/filter/message")
+                .with(csrf())
+                .param(FmsFilter.FMS_PARAMETER_NAME, "INVALID-FMS-TOKEN")
+                .param("message", "with CSRF and FMS")
+        );
 
-		// then
-		result.andDo(print())
-				.andExpect(status().isNotAcceptable());
-	}
+        // then
+        result.andDo(print())
+                .andExpect(status().isNotAcceptable());
+    }
 
-	@Test
-	public void postFormDoubleSubmit() throws Exception {
-		// given
-		User user = new User("user", "1234", Collections.singletonList(new SimpleGrantedAuthority("USER")));
-		MockHttpSession session = new MockHttpSession();
-		session.setAttribute(user.getUsername(), user);
+    @Test
+    public void postFormDoubleSubmit() throws Exception {
+        // given
+        User user = new User("user", "1234", Collections.singletonList(new SimpleGrantedAuthority("USER")));
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(user.getUsername(), user);
 
-		ResultActions getResult = mockMvc.perform(get("/filter/message")
-				.session(session));
-		getResult
-				.andDo(print())
-				.andExpect(view().name("message-form"));
+        ResultActions getResult = mockMvc.perform(get("/filter/message")
+                .session(session));
+        getResult
+                .andDo(print())
+                .andExpect(view().name("message-form"));
 
-		String fmsToken = getResult.andReturn().getRequest().getAttribute(FmsFilter.FMS_PARAMETER_NAME).toString();
+        String fmsToken = getResult.andReturn().getRequest().getAttribute(FmsFilter.FMS_PARAMETER_NAME).toString();
 
-		// when
-		ResultActions firstResult = mockMvc.perform(post("/filter/message")
-				.session(session)
-				.with(csrf())
-				.param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
-				.param("message", "first submit")
-		);
+        // when
+        ResultActions firstResult = mockMvc.perform(post("/filter/message")
+                .session(session)
+                .with(csrf())
+                .param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
+                .param("message", "first submit")
+        );
 
-		Thread.sleep(10);
-		ResultActions secondResult = mockMvc.perform(post("/filter/message")
-				.session(session)
-				.with(csrf())
-				.param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
-				.param("message", "second submit")
-		);
+        Thread.sleep(10);
+        ResultActions secondResult = mockMvc.perform(post("/filter/message")
+                .session(session)
+                .with(csrf())
+                .param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
+                .param("message", "second submit")
+        );
 
-		// then
-		firstResult.andDo(print())
-				.andExpect(status().isOk());
-		secondResult.andDo(print())
-				.andExpect(status().isNotAcceptable());
-	}
+        // then
+        firstResult.andDo(print())
+                .andExpect(status().isOk());
+        secondResult.andDo(print())
+                .andExpect(status().isNotAcceptable());
+    }
 
-	@RepeatedTest(30)
-	public void postFormMultipleSubmit(RepetitionInfo info) throws Exception {
-		// given
-		User user = new User("user", "1234", Collections.singletonList(new SimpleGrantedAuthority("USER")));
-		MockHttpSession session = new MockHttpSession();
-		session.setAttribute(user.getUsername(), user);
+    @RepeatedTest(30)
+    public void postFormMultipleSubmit(RepetitionInfo info) throws Exception {
+        // given
+        User user = new User("user", "1234", Collections.singletonList(new SimpleGrantedAuthority("USER")));
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(user.getUsername(), user);
 
-		ResultActions getResult = mockMvc.perform(get("/filter/message")
-				.session(session));
-		getResult
-				.andDo(print())
-				.andExpect(view().name("message-form"));
+        ResultActions getResult = mockMvc.perform(get("/filter/message")
+                .session(session));
+        getResult
+                .andDo(print())
+                .andExpect(view().name("message-form"));
 
-		String fmsToken = getResult.andReturn().getRequest().getAttribute(FmsFilter.FMS_PARAMETER_NAME).toString();
+        String fmsToken = getResult.andReturn().getRequest().getAttribute(FmsFilter.FMS_PARAMETER_NAME).toString();
 
-		List<Integer> statusList = new CopyOnWriteArrayList<>();
-		int numOfThread = 10;
-		ExecutorService executorService = Executors.newFixedThreadPool(numOfThread);
-		CountDownLatch latch = new CountDownLatch(numOfThread);
-		for( int i = 0; i < numOfThread ; i++) {
-			int finalI = i;
-			executorService.execute(() -> {
-				try {
-					Thread.sleep(10*finalI);
-					ResultActions result = mockMvc.perform(post("/filter/message")
-							.session(session)
-							.with(csrf())
-							.param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
-							.param("message", finalI + " thread submit"));
-					statusList.add(result.andReturn().getResponse().getStatus());
-					latch.countDown();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			});
-		}
-		latch.await();
-		System.out.println(Arrays.toString(statusList.toArray()));
+        List<Integer> statusList = new CopyOnWriteArrayList<>();
+        int numOfThread = 10;
+        ExecutorService executorService = Executors.newFixedThreadPool(numOfThread);
+        CountDownLatch latch = new CountDownLatch(numOfThread);
+        for (int i = 0; i < numOfThread; i++) {
+            int finalI = i;
+            executorService.execute(() -> {
+                try {
+                    Thread.sleep(10 * finalI);
+                    ResultActions result = mockMvc.perform(post("/filter/message")
+                            .session(session)
+                            .with(csrf())
+                            .param(FmsFilter.FMS_PARAMETER_NAME, fmsToken)
+                            .param("message", finalI + " thread submit"));
+                    statusList.add(result.andReturn().getResponse().getStatus());
+                    latch.countDown();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        latch.await();
+        System.out.println(Arrays.toString(statusList.toArray()));
 
-		assertThat(statusList).hasSize(numOfThread);
-		assertThat(statusList).haveAtMost(1, new Condition<Integer>(status-> status == 200, "isOK"));
-	}
+        assertThat(statusList).hasSize(numOfThread);
+        assertThat(statusList).haveAtMost(1, new Condition<Integer>(status -> status == 200, "isOK"));
+    }
 }
