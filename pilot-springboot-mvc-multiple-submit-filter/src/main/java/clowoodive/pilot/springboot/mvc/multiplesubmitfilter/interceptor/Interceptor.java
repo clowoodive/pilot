@@ -1,4 +1,4 @@
-package clowoodive.pilot.springboot.mvc.multiplesubmitfilter;
+package clowoodive.pilot.springboot.mvc.multiplesubmitfilter.interceptor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -1,13 +1,10 @@
-package clowoodive.pilot.springboot.mvc.multiplesubmitfilter;
+package clowoodive.pilot.springboot.mvc.multiplesubmitfilter.fmsFilter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.codec.Utf8;
-import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
@@ -27,14 +24,11 @@ import java.util.UUID;
 @Component
 public class FmsFilter extends OncePerRequestFilter {
 
-    public static final RequestMatcher DEFAULT_FMS_MATCHER = new DefaultRequiresFmsMatcher();
     public static final String FMS_PARAMETER_NAME = "_fms";
 
     private final Log logger = LogFactory.getLog(getClass());
 
-    private RequestMatcher requireFmsProtectionMatcher = DEFAULT_FMS_MATCHER;
-
-    private AccessDeniedHandler accessDeniedHandler = new AccessDeniedHandlerImpl();
+    private final RequestMatcher requireFmsProtectionMatcher = new DefaultRequiresFmsMatcher();
 
     private boolean enabled = true;
 
@@ -66,7 +60,7 @@ public class FmsFilter extends OncePerRequestFilter {
         request.setAttribute(HttpServletResponse.class.getName(), response);
 
         if (!this.enabled) {
-                this.logger.warn("FMS filter disabled.");
+            this.logger.warn("FMS filter disabled.");
             filterChain.doFilter(request, response);
             return;
         }
@@ -82,14 +76,6 @@ public class FmsFilter extends OncePerRequestFilter {
         }
         request.setAttribute(FMS_PARAMETER_NAME, fmsToken);
 
-//        CsrfToken csrfToken = this.tokenRepository.loadToken(request);
-//        boolean missingToken = (csrfToken == null);
-//        if (missingToken) {
-//            csrfToken = this.tokenRepository.generateToken(request);
-//            this.tokenRepository.saveToken(csrfToken, request, response);
-//        }
-//        request.setAttribute(CsrfToken.class.getName(), csrfToken);
-//        request.setAttribute(csrfToken.getParameterName(), csrfToken);
         if (!this.requireFmsProtectionMatcher.matches(request)) {
             if (this.logger.isTraceEnabled()) {
                 this.logger.trace("Did not protect against FMS since request did not match "
@@ -98,29 +84,19 @@ public class FmsFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-//        String actualToken = request.getHeader(csrfToken.getHeaderName());
-//        if (actualToken == null) {
-        var actualToken = request.getParameter(FMS_PARAMETER_NAME);
 
-        logger.warn("ssession token : " + fmsToken);
-        logger.warn("request token : " + actualToken);
-//        }
-        if (!equalsConstantTime(fmsToken, actualToken)) {
-            this.logger.debug(
-                    LogMessage.of(() -> "Invalid FMS token found for " + UrlUtils.buildFullRequestUrl(request)));
-//            AccessDeniedException exception = session != null ? new InvalidCsrfTokenException(csrfToken, actualToken)
-//                    : new MissingCsrfTokenException(actualToken);
-            response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), HttpStatus.NOT_ACCEPTABLE.getReasonPhrase());
-//            this.accessDeniedHandler.handle(request, response, new AccessDeniedException("Invalid FMS token"));
-            return;
-        } else {
+        var actualToken = request.getParameter(FMS_PARAMETER_NAME);
+        if (equalsConstantTime(fmsToken, actualToken)) {
             if (session != null) {
-//                session.removeAttribute(FMS_PARAMETER_NAME);
                 var newFmsToken = UUID.randomUUID().toString();
-                logger.warn("new token : " + newFmsToken);
                 session.setAttribute(FMS_PARAMETER_NAME, newFmsToken);
                 request.setAttribute(FMS_PARAMETER_NAME, newFmsToken);
             }
+        } else {
+            this.logger.debug(
+                    LogMessage.of(() -> "Invalid FMS token found for " + UrlUtils.buildFullRequestUrl(request)));
+            response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), HttpStatus.NOT_ACCEPTABLE.getReasonPhrase());
+            return;
         }
         filterChain.doFilter(request, response);
     }

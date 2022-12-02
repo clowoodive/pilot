@@ -1,4 +1,4 @@
-package clowoodive.pilot.springboot.mvc.multiplesubmitfilter;
+package clowoodive.pilot.springboot.mvc.multiplesubmitfilter.fmsFilter;
 
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
