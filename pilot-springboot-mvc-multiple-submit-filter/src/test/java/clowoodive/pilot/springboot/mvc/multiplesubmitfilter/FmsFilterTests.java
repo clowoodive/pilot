@@ -110,7 +110,7 @@ class FmsFilterTests {
     }
 
     @Test
-    public void postMFormWithValidCsrfAndFms() throws Exception {
+    public void postFormWithValidCsrfAndFms() throws Exception {
         // given
         UUID genUuid = UUID.randomUUID();
 
